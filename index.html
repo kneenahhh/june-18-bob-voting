@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bobathon 2026 - Project World Cup</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .trophy {
+            font-size: 4em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.3em;
+            opacity: 0.9;
+        }
+
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .project-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .project-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .project-card.selected {
+            border: 4px solid #ffd700;
+            background: linear-gradient(135deg, #fff9e6 0%, #ffffff 100%);
+        }
+
+        .project-card.selected::before {
+            content: '⭐';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 2em;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        .flag {
+            font-size: 4em;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .country-name {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .project-description {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 15px;
+            min-height: 60px;
+            font-style: italic;
+        }
+
+        .project-description.editable {
+            border: 2px dashed #ccc;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: text;
+        }
+
+        .project-description.editable:hover {
+            border-color: #667eea;
+            background: #f9f9f9;
+        }
+
+        .vote-count {
+            text-align: center;
+            font-size: 1.2em;
+            color: #667eea;
+            font-weight: bold;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid #eee;
+        }
+
+        .vote-button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 15px;
+        }
+
+        .vote-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .vote-button:active {
+            transform: scale(0.98);
+        }
+
+        .results-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            margin-top: 30px;
+        }
+
+        .results-title {
+            font-size: 2em;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .winner-announcement {
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 20px rgba(255, 215, 0, 0.4);
+        }
+
+        .winner-announcement h2 {
+            font-size: 2.5em;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .winner-flag {
+            font-size: 5em;
+            margin: 20px 0;
+        }
+
+        .results-list {
+            list-style: none;
+        }
+
+        .result-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f5f5f5;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .result-item:hover {
+            background: #e8e8e8;
+        }
+
+        .result-rank {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #667eea;
+            margin-right: 15px;
+            min-width: 40px;
+        }
+
+        .result-flag {
+            font-size: 2em;
+            margin-right: 15px;
+        }
+
+        .result-info {
+            flex: 1;
+        }
+
+        .result-country {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .result-votes {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #667eea;
+            margin-left: auto;
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .control-button {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .show-results-btn {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+
+        .reset-btn {
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+            color: white;
+        }
+
+        .control-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .edit-mode-toggle {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .edit-mode-btn {
+            padding: 10px 25px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .edit-mode-btn:hover {
+            background: #764ba2;
+        }
+
+        .edit-mode-btn.active {
+            background: #38ef7d;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2em;
+            }
+            
+            .projects-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .control-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="trophy">🏆</div>
+            <h1>Bobathon 2026 Project World Cup</h1>
+            <p class="subtitle">Vote for Your Favorite Hackathon Project!</p>
+        </header>
+
+        <div class="edit-mode-toggle">
+            <button class="edit-mode-btn" onclick="toggleEditMode()">
+                📝 Edit Project Descriptions
+            </button>
+        </div>
+
+        <div id="votingSection">
+            <div class="projects-grid" id="projectsGrid">
+                <!-- Projects will be dynamically generated -->
+            </div>
+
+            <div class="control-buttons">
+                <button class="control-button show-results-btn" onclick="showResults()">
+                    📊 Show Results
+                </button>
+                <button class="control-button reset-btn" onclick="resetVotes()">
+                    🔄 Reset All Votes
+                </button>
+            </div>
+        </div>
+
+        <div id="resultsSection" class="results-section hidden">
+            <h2 class="results-title">🏆 Final Results 🏆</h2>
+            <div id="winnerAnnouncement"></div>
+            <ul class="results-list" id="resultsList"></ul>
+            <div class="control-buttons">
+                <button class="control-button show-results-btn" onclick="backToVoting()">
+                    ← Back to Voting
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Project data - customize countries and descriptions as needed
+        const projects = [
+            {
+                id: 1,
+                country: 'Brazil',
+                flag: '🇧🇷',
+                description: 'Click to add project description...',
+                votes: 0
+            },
+            {
+                id: 2,
+                country: 'Germany',
+                flag: '🇩🇪',
+                description: 'Click to add project description...',
+                votes: 0
+            },
+            {
+                id: 3,
+                country: 'Argentina',
+                flag: '🇦🇷',
+                description: 'Click to add project description...',
+                votes: 0
+            },
+            {
+                id: 4,
+                country: 'France',
+                flag: '🇫🇷',
+                description: 'Click to add project description...',
+                votes: 0
+            },
+            {
+                id: 5,
+                country: 'Spain',
+                flag: '🇪🇸',
+                description: 'Click to add project description...',
+                votes: 0
+            },
+            {
+                id: 6,
+                country: 'England',
+                flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
+                description: 'Click to add project description...',
+                votes: 0
+            },
+            {
+                id: 7,
+                country: 'Italy',
+                flag: '🇮🇹',
+                description: 'Click to add project description...',
+                votes: 0
+            },
+            {
+                id: 8,
+                country: 'Portugal',
+                flag: '🇵🇹',
+                description: 'Click to add project description...',
+                votes: 0
+            }
+        ];
+
+        let editMode = false;
+        let selectedProject = null;
+
+        // Load saved data from localStorage
+        function loadData() {
+            const savedProjects = localStorage.getItem('bobathonProjects');
+            if (savedProjects) {
+                const parsed = JSON.parse(savedProjects);
+                parsed.forEach((saved, index) => {
+                    if (projects[index]) {
+                        projects[index].description = saved.description;
+                        projects[index].votes = saved.votes;
+                    }
+                });
+            }
+        }
+
+        // Save data to localStorage
+        function saveData() {
+            localStorage.setItem('bobathonProjects', JSON.stringify(projects));
+        }
+
+        // Toggle edit mode
+        function toggleEditMode() {
+            editMode = !editMode;
+            const btn = document.querySelector('.edit-mode-btn');
+            btn.classList.toggle('active');
+            btn.textContent = editMode ? '✅ Done Editing' : '📝 Edit Project Descriptions';
+            renderProjects();
+        }
+
+        // Render projects
+        function renderProjects() {
+            const grid = document.getElementById('projectsGrid');
+            grid.innerHTML = '';
+
+            projects.forEach(project => {
+                const card = document.createElement('div');
+                card.className = 'project-card';
+                card.id = `project-${project.id}`;
+
+                const descClass = editMode ? 'project-description editable' : 'project-description';
+                const descContent = editMode ? 
+                    `<div class="${descClass}" contenteditable="true" onblur="saveDescription(${project.id}, this.textContent)">${project.description}</div>` :
+                    `<div class="${descClass}">${project.description}</div>`;
+
+                card.innerHTML = `
+                    <div class="flag">${project.flag}</div>
+                    <div class="country-name">${project.country}</div>
+                    ${descContent}
+                    ${!editMode ? `
+                        <button class="vote-button" onclick="vote(${project.id})">
+                            Vote for ${project.country}
+                        </button>
+                        <div class="vote-count">Votes: ${project.votes}</div>
+                    ` : ''}
+                `;
+
+                grid.appendChild(card);
+            });
+        }
+
+        // Save description
+        function saveDescription(projectId, text) {
+            const project = projects.find(p => p.id === projectId);
+            if (project) {
+                project.description = text.trim();
+                saveData();
+            }
+        }
+
+        // Vote for a project
+        function vote(projectId) {
+            const project = projects.find(p => p.id === projectId);
+            if (project) {
+                project.votes++;
+                saveData();
+                renderProjects();
+                
+                // Visual feedback
+                const card = document.getElementById(`project-${projectId}`);
+                card.classList.add('selected');
+                setTimeout(() => {
+                    card.classList.remove('selected');
+                }, 1000);
+            }
+        }
+
+        // Show results
+        function showResults() {
+            document.getElementById('votingSection').classList.add('hidden');
+            document.getElementById('resultsSection').classList.remove('hidden');
+
+            // Sort projects by votes
+            const sorted = [...projects].sort((a, b) => b.votes - a.votes);
+
+            // Show winner
+            const winner = sorted[0];
+            const winnerDiv = document.getElementById('winnerAnnouncement');
+            winnerDiv.innerHTML = `
+                <div class="winner-announcement">
+                    <h2>🎉 Winner! 🎉</h2>
+                    <div class="winner-flag">${winner.flag}</div>
+                    <h2>${winner.country}</h2>
+                    <p style="font-size: 1.5em; margin-top: 10px;">${winner.votes} votes</p>
+                </div>
+            `;
+
+            // Show all results
+            const resultsList = document.getElementById('resultsList');
+            resultsList.innerHTML = '';
+            sorted.forEach((project, index) => {
+                const li = document.createElement('li');
+                li.className = 'result-item';
+                li.innerHTML = `
+                    <div class="result-rank">#${index + 1}</div>
+                    <div class="result-flag">${project.flag}</div>
+                    <div class="result-info">
+                        <div class="result-country">${project.country}</div>
+                    </div>
+                    <div class="result-votes">${project.votes} votes</div>
+                `;
+                resultsList.appendChild(li);
+            });
+        }
+
+        // Back to voting
+        function backToVoting() {
+            document.getElementById('resultsSection').classList.add('hidden');
+            document.getElementById('votingSection').classList.remove('hidden');
+        }
+
+        // Reset all votes
+        function resetVotes() {
+            if (confirm('Are you sure you want to reset all votes? This cannot be undone.')) {
+                projects.forEach(project => {
+                    project.votes = 0;
+                });
+                saveData();
+                renderProjects();
+                alert('All votes have been reset!');
+            }
+        }
+
+        // Initialize
+        loadData();
+        renderProjects();
+    </script>
+</body>
+</html>
