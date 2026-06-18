@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bobathon 2026 - Project World Cup</title>
+    <title>Bobathon June 18 Hackathon Voting</title>
     <style>
         * {
             margin: 0;
@@ -47,6 +47,24 @@
         .subtitle {
             font-size: 1.3em;
             opacity: 0.9;
+        }
+
+        .connection-status {
+            text-align: center;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+
+        .connection-status.connected {
+            background: rgba(56, 239, 125, 0.2);
+            color: #38ef7d;
+        }
+
+        .connection-status.disconnected {
+            background: rgba(235, 51, 73, 0.2);
+            color: #eb3349;
         }
 
         .projects-grid {
@@ -103,6 +121,18 @@
             color: #333;
             margin-bottom: 10px;
             text-align: center;
+        }
+
+        .country-name.editable {
+            border: 2px dashed #ccc;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: text;
+        }
+
+        .country-name.editable:hover {
+            border-color: #667eea;
+            background: #f9f9f9;
         }
 
         .project-description {
@@ -320,13 +350,17 @@
     <div class="container">
         <header>
             <div class="trophy">🏆</div>
-            <h1>Bobathon 2026 Project World Cup</h1>
+            <h1>Bobathon June 18 Hackathon Voting</h1>
             <p class="subtitle">Vote for Your Favorite Hackathon Project!</p>
         </header>
 
+        <div id="connectionStatus" class="connection-status disconnected">
+            🔄 Connecting to Firebase...
+        </div>
+
         <div class="edit-mode-toggle">
             <button class="edit-mode-btn" onclick="toggleEditMode()">
-                📝 Edit Project Descriptions
+                📝 Edit Project Titles & Descriptions
             </button>
         </div>
 
@@ -357,95 +391,135 @@
         </div>
     </div>
 
-    <script>
-        // Project data - customize countries and descriptions as needed
-        const projects = [
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getDatabase, ref, set, onValue, update, get } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+
+        // Your Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCITNIV6RyoCgIQJziv9WYxOGPq-1-ct04",
+            authDomain: "bobathon-voting.firebaseapp.com",
+            databaseURL: "https://bobathon-voting-default-rtdb.firebaseio.com",
+            projectId: "bobathon-voting",
+            storageBucket: "bobathon-voting.firebasestorage.app",
+            messagingSenderId: "88996679714",
+            appId: "1:88996679714:web:13f4b19f7dacbb05ffba7b"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        // Project data
+        const defaultProjects = [
             {
                 id: 1,
-                country: 'Brazil',
-                flag: '🇧🇷',
+                country: 'Project 1',
+                flag: '📊',
                 description: 'Click to add project description...',
                 votes: 0
             },
             {
                 id: 2,
-                country: 'Germany',
-                flag: '🇩🇪',
+                country: 'Project 2',
+                flag: '🗂️',
                 description: 'Click to add project description...',
                 votes: 0
             },
             {
                 id: 3,
-                country: 'Argentina',
-                flag: '🇦🇷',
+                country: 'Project 3',
+                flag: '📈',
                 description: 'Click to add project description...',
                 votes: 0
             },
             {
                 id: 4,
-                country: 'France',
-                flag: '🇫🇷',
+                country: 'Project 4',
+                flag: '🔗',
                 description: 'Click to add project description...',
                 votes: 0
             },
             {
                 id: 5,
-                country: 'Spain',
-                flag: '🇪🇸',
+                country: 'Project 5',
+                flag: '📋',
                 description: 'Click to add project description...',
                 votes: 0
             },
             {
                 id: 6,
-                country: 'England',
-                flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
+                country: 'Project 6',
+                flag: '🗃️',
                 description: 'Click to add project description...',
                 votes: 0
             },
             {
                 id: 7,
-                country: 'Italy',
-                flag: '🇮🇹',
+                country: 'Project 7',
+                flag: '📑',
                 description: 'Click to add project description...',
                 votes: 0
             },
             {
                 id: 8,
-                country: 'Portugal',
-                flag: '🇵🇹',
+                country: 'Project 8',
+                flag: '💾',
                 description: 'Click to add project description...',
                 votes: 0
             }
         ];
 
+        let projects = [...defaultProjects];
         let editMode = false;
-        let selectedProject = null;
 
-        // Load saved data from localStorage
-        function loadData() {
-            const savedProjects = localStorage.getItem('bobathonProjects');
-            if (savedProjects) {
-                const parsed = JSON.parse(savedProjects);
-                parsed.forEach((saved, index) => {
-                    if (projects[index]) {
-                        projects[index].description = saved.description;
-                        projects[index].votes = saved.votes;
-                    }
-                });
+        // Initialize database with default data if empty
+        async function initializeDatabase() {
+            const projectsRef = ref(database, 'projects');
+            const snapshot = await get(projectsRef);
+            
+            if (!snapshot.exists()) {
+                await set(projectsRef, defaultProjects);
+                console.log('Database initialized with default projects');
             }
         }
 
-        // Save data to localStorage
-        function saveData() {
-            localStorage.setItem('bobathonProjects', JSON.stringify(projects));
+        // Update connection status
+        function updateConnectionStatus(connected) {
+            const statusDiv = document.getElementById('connectionStatus');
+            if (connected) {
+                statusDiv.className = 'connection-status connected';
+                statusDiv.textContent = '✅ Connected - Real-time voting active!';
+            } else {
+                statusDiv.className = 'connection-status disconnected';
+                statusDiv.textContent = '❌ Disconnected - Reconnecting...';
+            }
+        }
+
+        // Listen for real-time updates
+        function setupRealtimeListener() {
+            const projectsRef = ref(database, 'projects');
+            
+            onValue(projectsRef, (snapshot) => {
+                updateConnectionStatus(true);
+                const data = snapshot.val();
+                if (data) {
+                    projects = data;
+                    renderProjects();
+                }
+            }, (error) => {
+                console.error('Firebase error:', error);
+                updateConnectionStatus(false);
+            });
         }
 
         // Toggle edit mode
-        function toggleEditMode() {
+        window.toggleEditMode = function() {
             editMode = !editMode;
             const btn = document.querySelector('.edit-mode-btn');
             btn.classList.toggle('active');
-            btn.textContent = editMode ? '✅ Done Editing' : '📝 Edit Project Descriptions';
+            btn.textContent = editMode ? '✅ Done Editing' : '📝 Edit Project Titles & Descriptions';
             renderProjects();
         }
 
@@ -459,6 +533,11 @@
                 card.className = 'project-card';
                 card.id = `project-${project.id}`;
 
+                const titleClass = editMode ? 'country-name editable' : 'country-name';
+                const titleContent = editMode ? 
+                    `<div class="${titleClass}" contenteditable="true" onblur="saveTitle(${project.id}, this.textContent)">${project.country}</div>` :
+                    `<div class="${titleClass}">${project.country}</div>`;
+
                 const descClass = editMode ? 'project-description editable' : 'project-description';
                 const descContent = editMode ? 
                     `<div class="${descClass}" contenteditable="true" onblur="saveDescription(${project.id}, this.textContent)">${project.description}</div>` :
@@ -466,7 +545,7 @@
 
                 card.innerHTML = `
                     <div class="flag">${project.flag}</div>
-                    <div class="country-name">${project.country}</div>
+                    ${titleContent}
                     ${descContent}
                     ${!editMode ? `
                         <button class="vote-button" onclick="vote(${project.id})">
@@ -480,22 +559,34 @@
             });
         }
 
-        // Save description
-        function saveDescription(projectId, text) {
-            const project = projects.find(p => p.id === projectId);
-            if (project) {
-                project.description = text.trim();
-                saveData();
+        // Save title to Firebase
+        window.saveTitle = async function(projectId, text) {
+            const projectIndex = projects.findIndex(p => p.id === projectId);
+            if (projectIndex !== -1) {
+                const updates = {};
+                updates[`projects/${projectIndex}/country`] = text.trim();
+                await update(ref(database), updates);
+            }
+        }
+
+        // Save description to Firebase
+        window.saveDescription = async function(projectId, text) {
+            const projectIndex = projects.findIndex(p => p.id === projectId);
+            if (projectIndex !== -1) {
+                const updates = {};
+                updates[`projects/${projectIndex}/description`] = text.trim();
+                await update(ref(database), updates);
             }
         }
 
         // Vote for a project
-        function vote(projectId) {
-            const project = projects.find(p => p.id === projectId);
-            if (project) {
-                project.votes++;
-                saveData();
-                renderProjects();
+        window.vote = async function(projectId) {
+            const projectIndex = projects.findIndex(p => p.id === projectId);
+            if (projectIndex !== -1) {
+                const newVotes = (projects[projectIndex].votes || 0) + 1;
+                const updates = {};
+                updates[`projects/${projectIndex}/votes`] = newVotes;
+                await update(ref(database), updates);
                 
                 // Visual feedback
                 const card = document.getElementById(`project-${projectId}`);
@@ -507,14 +598,12 @@
         }
 
         // Show results
-        function showResults() {
+        window.showResults = function() {
             document.getElementById('votingSection').classList.add('hidden');
             document.getElementById('resultsSection').classList.remove('hidden');
 
-            // Sort projects by votes
-            const sorted = [...projects].sort((a, b) => b.votes - a.votes);
+            const sorted = [...projects].sort((a, b) => (b.votes || 0) - (a.votes || 0));
 
-            // Show winner
             const winner = sorted[0];
             const winnerDiv = document.getElementById('winnerAnnouncement');
             winnerDiv.innerHTML = `
@@ -522,11 +611,10 @@
                     <h2>🎉 Winner! 🎉</h2>
                     <div class="winner-flag">${winner.flag}</div>
                     <h2>${winner.country}</h2>
-                    <p style="font-size: 1.5em; margin-top: 10px;">${winner.votes} votes</p>
+                    <p style="font-size: 1.5em; margin-top: 10px;">${winner.votes || 0} votes</p>
                 </div>
             `;
 
-            // Show all results
             const resultsList = document.getElementById('resultsList');
             resultsList.innerHTML = '';
             sorted.forEach((project, index) => {
@@ -538,33 +626,34 @@
                     <div class="result-info">
                         <div class="result-country">${project.country}</div>
                     </div>
-                    <div class="result-votes">${project.votes} votes</div>
+                    <div class="result-votes">${project.votes || 0} votes</div>
                 `;
                 resultsList.appendChild(li);
             });
         }
 
         // Back to voting
-        function backToVoting() {
+        window.backToVoting = function() {
             document.getElementById('resultsSection').classList.add('hidden');
             document.getElementById('votingSection').classList.remove('hidden');
         }
 
         // Reset all votes
-        function resetVotes() {
+        window.resetVotes = async function() {
             if (confirm('Are you sure you want to reset all votes? This cannot be undone.')) {
-                projects.forEach(project => {
-                    project.votes = 0;
+                const updates = {};
+                projects.forEach((project, index) => {
+                    updates[`projects/${index}/votes`] = 0;
                 });
-                saveData();
-                renderProjects();
+                await update(ref(database), updates);
                 alert('All votes have been reset!');
             }
         }
 
         // Initialize
-        loadData();
-        renderProjects();
+        initializeDatabase().then(() => {
+            setupRealtimeListener();
+        });
     </script>
 </body>
 </html>
