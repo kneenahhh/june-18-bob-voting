@@ -548,6 +548,32 @@
     </style>
 </head>
 <body>
+    <!-- Privacy Modal Popup -->
+    <div id="privacyModal" class="modal-overlay">
+        <div class="privacy-modal">
+            <div class="modal-header">
+                <div class="icon">🔒</div>
+                <h2>Privacy & Data Notice</h2>
+            </div>
+            <div class="modal-body">
+                <p><strong>This is a public voting platform hosted on GitHub.</strong> Please keep the following in mind:</p>
+                <ul>
+                    <li><strong>Keep it generic:</strong> Use general project names and descriptions. Do not include company-sensitive information, proprietary data, or confidential details.</li>
+                    <li><strong>Public visibility:</strong> All content (project names, images, descriptions, and vote counts) is visible to anyone with this URL.</li>
+                    <li><strong>Images:</strong> Only upload non-confidential images. Do not upload screenshots containing sensitive data, internal systems, or proprietary information.</li>
+                    <li><strong>Temporary use:</strong> This voting page is for hackathon purposes only. After the winner is announced, this event will be archived and all data will be deleted.</li>
+                    <li><strong>No personal data:</strong> Do not include personal information, employee names, or internal team details in your submissions.</li>
+                </ul>
+                <p style="margin-top: 15px; font-size: 0.95em; color: #666;">
+                    <strong>Questions?</strong> Contact the Bobathon organizer if you have concerns about what information is appropriate to share.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button class="understand-btn" onclick="closePrivacyModal()">I Understand</button>
+            </div>
+        </div>
+    </div>
+
     <div class="container">
         <header>
             <img src="Bob Icon.png" alt="Bob" class="bob-icon" />
@@ -568,21 +594,6 @@
         </div>
 
         <div id="votingSection">
-            <div class="privacy-notice">
-                <h3>🔒 Privacy & Data Notice</h3>
-                <p><strong>This is a public voting platform hosted on GitHub.</strong> Please keep the following in mind:</p>
-                <ul>
-                    <li><strong>Keep it generic:</strong> Use general project names and descriptions. Do not include company-sensitive information, proprietary data, or confidential details.</li>
-                    <li><strong>Public visibility:</strong> All content (project names, images, descriptions, and vote counts) is visible to anyone with this URL.</li>
-                    <li><strong>Images:</strong> Only upload non-confidential images. Do not upload screenshots containing sensitive data, internal systems, or proprietary information.</li>
-                    <li><strong>Temporary use:</strong> This voting page is for hackathon purposes only. After the winner is announced, this event will be archived and all data will be deleted.</li>
-                    <li><strong>No personal data:</strong> Do not include personal information, employee names, or internal team details in your submissions.</li>
-                </ul>
-                <p style="margin-top: 15px; font-size: 0.95em; color: #666;">
-                    <strong>Questions?</strong> Contact the Bobathon organizer if you have concerns about what information is appropriate to share.
-                </p>
-            </div>
-
             <div class="control-buttons">
                 <button class="control-button edit-btn" id="editBtn" onclick="toggleEditMode()">
                     📝 Edit Your Project Info
@@ -948,7 +959,26 @@
             document.getElementById('votingSection').classList.remove('hidden');
         }
 
+        // Privacy Modal Functions
+        window.closePrivacyModal = function() {
+            const modal = document.getElementById('privacyModal');
+            modal.classList.add('hidden');
+            localStorage.setItem('privacyNoticeAccepted', 'true');
+        }
+
+        function checkPrivacyModal() {
+            const accepted = localStorage.getItem('privacyNoticeAccepted');
+            if (!accepted) {
+                // Show modal on first visit
+                document.getElementById('privacyModal').classList.remove('hidden');
+            } else {
+                // Hide modal if already accepted
+                document.getElementById('privacyModal').classList.add('hidden');
+            }
+        }
+
         // Initialize
+        checkPrivacyModal();
         loadActiveEvent();
     </script>
 </body>
