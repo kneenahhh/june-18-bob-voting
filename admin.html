@@ -704,10 +704,10 @@
                         <p>Date: ${event.date} | Projects: ${event.projectCount} | Total Votes: ${totalVotes}</p>
                     </div>
                     <div class="event-actions">
-                        ${!event.active ? `<button class="btn btn-success" onclick="activateEvent('${eventId}')">Activate</button>` : ''}
+                        ${!event.active ? `<button class="btn btn-success" onclick="activateEvent('${eventId}')">Activate</button>` : `<button class="btn btn-danger" onclick="deactivateEvent('${eventId}')">Deactivate</button>`}
                         <button class="btn btn-primary" onclick="viewEvent('${eventId}')">View</button>
                         <button class="btn btn-danger" onclick="resetVotes('${eventId}')">Reset Votes</button>
-                        <button class="btn btn-danger" onclick="deleteEvent('${eventId}')">Delete</button>
+                        <button class="btn btn-danger" onclick="archiveEvent('${eventId}')">Archive & Delete</button>
                     </div>
                 `;
                 eventList.appendChild(li);
@@ -734,6 +734,17 @@
             loadDashboard();
         }
 
+        window.deactivateEvent = async function(eventId) {
+            if (!confirm('Deactivate this event? It will no longer be visible on the public voting page.')) return;
+            
+            await update(ref(database, `events/${eventId}`), { active: false });
+            await set(ref(database, 'settings/activeEventId'), null);
+            
+            alert('✅ Event deactivated! The public voting page will now show "No active event".');
+            loadEvents();
+            loadDashboard();
+        }
+
         window.resetVotes = async function(eventId) {
             if (!confirm('Reset all votes for this event? This cannot be undone.')) return;
             
@@ -751,12 +762,35 @@
             loadEvents();
         }
 
-        window.deleteEvent = async function(eventId) {
-            if (!confirm('Delete this event permanently? This cannot be undone.')) return;
+        window.archiveEvent = async function(eventId) {
+            const event = (await get(ref(database, `events/${eventId}`))).val();
             
+            if (!confirm(`⚠️ ARCHIVE & DELETE EVENT\n\nThis will:\n✓ Deactivate the event (remove from public page)\n✓ Permanently delete all project data\n✓ Delete all vote records\n✓ Remove all uploaded images\n\nEvent: ${event.title}\nDate: ${event.date}\nTotal Votes: ${event.projects ? event.projects.reduce((sum, p) => sum + (p.votes || 0), 0) : 0}\n\nThis action CANNOT be undone!\n\nType the event title to confirm:`)) {
+                return;
+            }
+            
+            const confirmation = prompt(`Type "${event.title}" to confirm deletion:`);
+            if (confirmation !== event.title) {
+                alert('❌ Deletion cancelled - title did not match.');
+                return;
+            }
+            
+            // Deactivate if active
+            if (event.active) {
+                await set(ref(database, 'settings/activeEventId'), null);
+            }
+            
+            // Delete the event
             await remove(ref(database, `events/${eventId}`));
+            
+            alert('✅ Event archived and deleted successfully!\n\nAll data has been permanently removed.');
             loadEvents();
             loadDashboard();
+        }
+
+        window.deleteEvent = async function(eventId) {
+            // Redirect to archive function
+            archiveEvent(eventId);
         }
 
         window.viewEvent = function(eventId) {
